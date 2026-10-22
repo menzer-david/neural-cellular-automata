@@ -1,0 +1,226 @@
+{
+  "quick_mode": false,
+  "param_count": 8320,
+  "checkpoints": {
+    "lizard": {
+      "regime": "regenerating",
+      "target": "lizard",
+      "iters": 3000
+    },
+    "lizard_persistent": {
+      "regime": "persistent",
+      "target": "lizard",
+      "iters": 3000
+    },
+    "lizard_growing": {
+      "regime": "growing",
+      "target": "lizard",
+      "iters": 3000
+    }
+  },
+  "loss": "per-pixel MSE of RGBA vs the target over the 72x72 grid (nca.loss_fn)",
+  "empty_grid_loss": 0.03047,
+  "looks_like_target_threshold": 0.006123,
+  "looks_like_target_definition": "loss < loss of the perfect target shifted by 1 px",
+  "healed_definition": "loss <= 1.5x the same model's mean undamaged loss at the same step AND loss < looks_like_target_threshold",
+  "training": {
+    "regenerating": {
+      "final_train_loss_last_100_iters": 0.0007627
+    },
+    "persistent": {
+      "final_train_loss_last_100_iters": 9.997e-05
+    },
+    "growing": {
+      "final_train_loss_last_100_iters": 0.0002471
+    }
+  },
+  "growth": {
+    "loss_at_step": {
+      "0": 0.03043,
+      "10": 0.02561,
+      "20": 0.01916,
+      "40": 0.007565,
+      "60": 0.00191,
+      "100": 0.0004549,
+      "200": 0.0001506
+    }
+  },
+  "heal": {
+    "cut_row": 26,
+    "cut_col": 28,
+    "cut_radius_px": 12,
+    "loss_before_cut": 0.0002201,
+    "loss_right_after_cut": 0.01495,
+    "loss_150_steps_after_cut": 0.0001757
+  },
+  "long_run": {
+    "steps": 2000,
+    "runs": 8,
+    "fire_rate": 0.5,
+    "regenerating": {
+      "loss_at_100_mean": 0.0004438,
+      "best_mean_loss": 0.000106,
+      "best_step": 761,
+      "loss_at_2000_mean": 0.0001068,
+      "loss_at_2000_max": 0.000116,
+      "runs_like_target_at_2000": 8,
+      "looks_like_target_at_2000": true
+    },
+    "persistent": {
+      "loss_at_100_mean": 0.0002315,
+      "best_mean_loss": 2.364e-05,
+      "best_step": 1947,
+      "loss_at_2000_mean": 2.376e-05,
+      "loss_at_2000_max": 2.432e-05,
+      "runs_like_target_at_2000": 8,
+      "looks_like_target_at_2000": true
+    },
+    "growing": {
+      "loss_at_100_mean": 0.0001678,
+      "best_mean_loss": 0.0001527,
+      "best_step": 91,
+      "loss_at_2000_mean": 0.04297,
+      "loss_at_2000_max": 0.05077,
+      "runs_like_target_at_2000": 0,
+      "looks_like_target_at_2000": false
+    }
+  },
+  "damage_sweep": {
+    "radii_px": [
+      3,
+      6,
+      9,
+      12,
+      15,
+      18
+    ],
+    "trials_per_radius": 20,
+    "grow_steps": 200,
+    "steps_after_cut": 300,
+    "regenerating": {
+      "undamaged_loss_at_500": 0.0001077,
+      "healed_pct": {
+        "3": 95.0,
+        "6": 90.0,
+        "9": 70.0,
+        "12": 30.0,
+        "15": 35.0,
+        "18": 15.0
+      },
+      "final_loss_mean": {
+        "3": 0.0001142,
+        "6": 0.0005516,
+        "9": 0.0004801,
+        "12": 0.003205,
+        "15": 0.004885,
+        "18": 0.004642
+      },
+      "median_steps_to_heal": {
+        "3": 44.0,
+        "6": 93.5,
+        "9": 100.5,
+        "12": 169.0,
+        "15": 145.0,
+        "18": 237.0
+      }
+    },
+    "persistent": {
+      "undamaged_loss_at_500": 2.356e-05,
+      "healed_pct": {
+        "3": 60.0,
+        "6": 45.0,
+        "9": 25.0,
+        "12": 10.0,
+        "15": 0.0,
+        "18": 0.0
+      },
+      "final_loss_mean": {
+        "3": 0.001237,
+        "6": 0.005338,
+        "9": 0.007426,
+        "12": 0.01555,
+        "15": 0.02149,
+        "18": 0.02411
+      }
+    },
+    "growing": {
+      "undamaged_loss_at_500": 0.009864,
+      "healed_pct": {
+        "3": 5.0,
+        "6": 0.0,
+        "9": 0.0,
+        "12": 0.0,
+        "15": 5.0,
+        "18": 0.0
+      },
+      "final_loss_mean": {
+        "3": 0.009787,
+        "6": 0.01097,
+        "9": 0.01591,
+        "12": 0.01716,
+        "15": 0.023,
+        "18": 0.02245
+      }
+    }
+  },
+  "knockout": {
+    "runs": 8,
+    "grow_steps": 200,
+    "steps_after": 200,
+    "control_loss_at_+200": 0.000114,
+    "wipe_rgb": {
+      "loss_right_after": 0.01189,
+      "loss_at_+200": 0.0001276,
+      "healed_pct": 100.0
+    },
+    "wipe_hidden": {
+      "loss_right_after": 0.0001632,
+      "loss_at_+200": 0.01484,
+      "healed_pct": 0.0
+    },
+    "wipe_left_half": {
+      "loss_right_after": 0.01587,
+      "loss_at_+200": 0.0001228,
+      "healed_pct": 100.0
+    }
+  },
+  "fire_rate": {
+    "runs": 8,
+    "steps_formula": "round(150 / fire_rate)",
+    "0.1": {
+      "steps": 1500,
+      "final_loss_mean": 0.0001128,
+      "final_loss_min": 0.0001027,
+      "final_loss_max": 0.0001272,
+      "runs_like_target": 8
+    },
+    "0.25": {
+      "steps": 600,
+      "final_loss_mean": 0.0001126,
+      "final_loss_min": 0.0001054,
+      "final_loss_max": 0.0001313,
+      "runs_like_target": 8
+    },
+    "0.5": {
+      "steps": 300,
+      "final_loss_mean": 0.0001277,
+      "final_loss_min": 0.0001092,
+      "final_loss_max": 0.0001707,
+      "runs_like_target": 8
+    },
+    "0.75": {
+      "steps": 200,
+      "final_loss_mean": 0.0006806,
+      "final_loss_min": 0.0004847,
+      "final_loss_max": 0.00097,
+      "runs_like_target": 8
+    },
+    "1.0": {
+      "steps": 150,
+      "final_loss_mean": 0.006667,
+      "final_loss_min": 0.006667,
+      "final_loss_max": 0.006667,
+      "runs_like_target": 0
+    }
+  }
+}

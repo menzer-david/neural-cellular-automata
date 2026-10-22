@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growing Neural Cellular Automata</title>
+<style>
+  :root { --bg: #f6f5f2; --fg: #1d1d1b; --muted: #74726c; --line: #dedbd4; --card: #fff; --accent: #2f6f4f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161615; --fg: #ecebe7; --muted: #9a9890; --line: #33322f; --card: #222220; --accent: #7cc4a0; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 544px; margin: 0 auto; padding: 40px 16px 48px; }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  #hint { color: var(--muted); margin: 0 0 20px; min-height: 1.5em; }
+  .stage { position: relative; background: #fff; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
+  canvas { display: block; width: 100%; aspect-ratio: 1; image-rendering: pixelated; touch-action: none; cursor: none; }
+  #ring { position: absolute; left: 0; top: 0; border: 1.5px solid rgba(0,0,0,.45); border-radius: 50%; pointer-events: none; display: none; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; align-items: center; }
+  select, button { font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; height: 36px; }
+  select { flex: 1 1 140px; min-width: 0; }
+  button { cursor: pointer; min-width: 76px; }
+  button:hover, select:hover { border-color: var(--muted); }
+  .sliders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 20px; margin-top: 18px; }
+  label { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--muted); }
+  label span { display: flex; justify-content: space-between; }
+  output { color: var(--fg); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin: 4px 0 0; }
+  footer { margin-top: 28px; font-size: 13px; color: var(--muted); }
+  footer a { color: inherit; }
+  @media (max-width: 420px) { main { padding-top: 24px; } .sliders { gap: 8px 14px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Growing Neural Cellular Automata</h1>
+  <p id="hint">Drag across it to cut. Every pixel runs the same tiny neural network, and it grows back.</p>
+  <div class="stage"><canvas id="grid" width="72" height="72"></canvas><div id="ring"></div></div>
+  <div id="controls">
+    <div class="row">
+      <select id="model" aria-label="Model"></select>
+      <button id="reset">Reset</button>
+      <button id="play">Pause</button>
+    </div>
+    <div class="sliders">
+      <label><span>Brush <output id="brushOut"></output></span><input id="brush" type="range" min="2" max="16" value="6"></label>
+      <label><span>Speed <output id="speedOut"></output></span><input id="speed" type="range" min="1" max="8" value="1"></label>
+      <label><span>Rotation <output id="rotOut"></output></span><input id="rot" type="range" min="0" max="360" value="0"></label>
+    </div>
+  </div>
+  <footer>8,320 weights per creature, trained in PyTorch, running here in plain JavaScript.
+    After <a href="https://distill.pub/2020/growing-ca/">Mordvintsev et al., 2020</a>.</footer>
+</main>
+<script src="weights.js"></script>
+<script src="nca.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const canvas = $('grid'), ctx = canvas.getContext('2d'), img = ctx.createImageData(NCA.W, NCA.H);
+  const models = window.NCA_MODELS || {};
+  const isAblation = name => /_(growing|persistent)$/.test(name);
+  const HINT = $('hint').textContent;
+
+  if (!Object.keys(models).length) {
+    $('hint').textContent = 'No trained weights found. Run "python3 nca.py export" to create demo/weights.js, then reload.';
+    $('controls').hidden = document.querySelector('.stage').hidden = true;
+    throw new Error('window.NCA_MODELS is missing');
+  }
+
+  // Model picker: regenerating models first, ablations in their own group.
+  const groups = [[$('model'), n => !isAblation(n)],
+                  [Object.assign(document.createElement('optgroup'), { label: 'Ablations: never trained to heal' }), isAblation]];
+  for (const [parent, keep] of groups) {
+    for (const name of Object.keys(models).filter(keep))
+      parent.append(new Option(`${models[name].emoji} ${models[name].label}`, name));
+    if (parent.tagName === 'OPTGROUP' && parent.children.length) $('model').append(parent);
+  }
+
+  // Shareable / debug URL params: ?model=&brush=&speed=&rot= set controls,
+  // ?steps=N pre-runs N steps before the first paint, ?erase=col,row,radius cuts after that.
+  const q = new URLSearchParams(location.search);
+  for (const id of ['model', 'brush', 'speed', 'rot']) if (q.has(id)) $(id).value = q.get(id);
+  if (!$('model').value) $('model').value = models.lizard ? 'lizard' : Object.keys(models)[0];
+
+  let model, state, paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const angle = () => $('rot').value * Math.PI / 180;
+
+  function pick() {
+    model = NCA.loadModel(models[$('model').value]);
+    state = NCA.seed();
+    $('hint').textContent = isAblation($('model').value)
+      ? 'This version was never trained on damage. Cut it and watch what happens.' : HINT;
+  }
+  function draw() {
+    const s = state, d = img.data;
+    for (let i = 0, j = 0; i < s.length; i += NCA.C, j += 4) {
+      const a = Math.min(Math.max(s[i + 3], 0), 1);
+      d[j] = 255 * Math.min(Math.max(1 - a + s[i], 0), 1);
+      d[j + 1] = 255 * Math.min(Math.max(1 - a + s[i + 1], 0), 1);
+      d[j + 2] = 255 * Math.min(Math.max(1 - a + s[i + 2], 0), 1);
+      d[j + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  function syncOutputs() {
+    $('brushOut').value = $('brush').value;
+    $('speedOut').value = $('speed').value + '×';
+    $('rotOut').value = $('rot').value + '°';
+    $('play').textContent = paused ? 'Play' : 'Pause';
+  }
+
+  // Cutting: pointer events cover mouse, pen and touch. Fast drags are filled in
+  // along the segment so a quick swipe cuts a line, not a row of dots.
+  let last = null;
+  function cellAt(e) {
+    const r = canvas.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width * NCA.W - 0.5, (e.clientY - r.top) / r.height * NCA.H - 0.5];
+  }
+  function cut(e) {
+    const [x, y] = cellAt(e), rad = +$('brush').value / 2, [lx, ly] = last || [x, y];
+    const n = Math.ceil(Math.hypot(x - lx, y - ly) / (rad / 2)) || 1;
+    for (let k = 1; k <= n; k++) NCA.erase(state, ly + (y - ly) * k / n, lx + (x - lx) * k / n, rad);
+    last = [x, y];
+  }
+  function moveRing(e) {
+    const r = canvas.getBoundingClientRect(), d = $('brush').value / NCA.W * r.width, ring = $('ring');
+    Object.assign(ring.style, { width: d + 'px', height: d + 'px', display: 'block',
+      transform: `translate(${e.clientX - r.left - d / 2}px, ${e.clientY - r.top - d / 2}px)` });
+  }
+  canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); last = null; cut(e); });
+  canvas.addEventListener('pointermove', e => { moveRing(e); if (canvas.hasPointerCapture(e.pointerId)) cut(e); });
+  canvas.addEventListener('pointerleave', () => { $('ring').style.display = 'none'; });
+
+  $('model').addEventListener('change', pick);
+  $('reset').addEventListener('click', () => { state = NCA.seed(); });
+  $('play').addEventListener('click', () => { paused = !paused; syncOutputs(); });
+  for (const id of ['brush', 'speed', 'rot']) $(id).addEventListener('input', syncOutputs);
+
+  pick();
+  for (let i = 0; i < +(q.get('steps') || 0); i++) NCA.step(state, model, 0.5, angle());
+  if (q.has('erase')) { const [x, y, r] = q.get('erase').split(',').map(Number); NCA.erase(state, y, x, r); }
+  syncOutputs();
+
+  (function frame() {
+    if (!paused) for (let i = 0; i < +$('speed').value; i++) NCA.step(state, model, 0.5, angle());
+    draw();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
