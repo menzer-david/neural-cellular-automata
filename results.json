@@ -16,6 +16,16 @@
       "regime": "growing",
       "target": "lizard",
       "iters": 3000
+    },
+    "butterfly": {
+      "regime": "regenerating",
+      "target": "butterfly",
+      "iters": 3000
+    },
+    "mushroom": {
+      "regime": "regenerating",
+      "target": "mushroom",
+      "iters": 3000
     }
   },
   "loss": "per-pixel MSE of RGBA vs the target over the 72x72 grid (nca.loss_fn)",
@@ -43,6 +53,28 @@
       "60": 0.00191,
       "100": 0.0004549,
       "200": 0.0001506
+    }
+  },
+  "growth_butterfly": {
+    "loss_at_step": {
+      "0": 0.06052,
+      "10": 0.05501,
+      "20": 0.04002,
+      "40": 0.0127,
+      "60": 0.002954,
+      "100": 0.001163,
+      "200": 0.0004359
+    }
+  },
+  "growth_mushroom": {
+    "loss_at_step": {
+      "0": 0.1172,
+      "10": 0.1212,
+      "20": 0.1241,
+      "40": 0.04192,
+      "60": 0.008295,
+      "100": 0.00502,
+      "200": 0.002856
     }
   },
   "heal": {

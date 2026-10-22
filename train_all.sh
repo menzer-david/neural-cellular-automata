@@ -6,8 +6,8 @@
 #   lizard regenerating 3000 + persistent 3000 + growing 3000 = 9000 iters * 1.05 s = ~158 min
 #   + ~1 min startup/export  => ~159 min total.
 # The three lizards share N=3000 (fair ablation; the minimum allowed). Even that is ~9 min over the
-# 150-minute budget. Butterfly and mushroom (2000 iters, ~35 min each) run after the lizards, with an
-# export after the lizards too so the demo + experiments can use the final lizards early. Total ~3h50m.
+# 150-minute budget. Butterfly and mushroom run after the lizards, also at 3000 iters: at 2000 they stop
+# right at the learning-rate drop and slowly drift apart over long runs. Total ~5 h awake.
 set -e
 cd "$(dirname "$0")"
 mkdir -p logs checkpoints
@@ -23,7 +23,7 @@ run lizard_persistent lizard    persistent   3000
 run lizard_growing    lizard    growing      3000
 python3 nca.py export
 echo "== lizards done $(date +%H:%M)"
-run butterfly         butterfly regenerating 2000
-run mushroom          mushroom  regenerating 2000
+run butterfly         butterfly regenerating 3000
+run mushroom          mushroom  regenerating 3000
 python3 nca.py export
 echo "== done $(date +%H:%M)"

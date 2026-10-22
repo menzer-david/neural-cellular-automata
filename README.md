@@ -98,9 +98,17 @@ Same weights, but I rotated the Sobel filters, which changes which direction the
 
 These three losses aren't directly comparable, because each version builds its training batches differently (the regenerating one keeps getting fresh holes), so the regenerating one ending highest doesn't mean it's the worst.
 
+### A butterfly and a mushroom
+
+![The butterfly growing from one pixel](figures/growth_butterfly.png)
+
+![The mushroom growing from one pixel](figures/growth_mushroom.png)
+
+I also trained a butterfly and a mushroom the regenerating way to make sure it wasn't just a lizard thing. My first try only gave them 2,000 iterations, and when I left them running they slowly fell apart (the butterfly drifted up the grid and the mushroom's stem turned into fuzz). That's because the learning rate drops at iteration 2,000, so they stopped right before the fine-tuning part. With 3,000 iterations like the lizards they hold their shape. The mushroom still comes out a little grainy, especially the stem.
+
 ## Try the demo
 
-Open `demo/index.html` in a browser (double-clicking it works, no server needed) and drag across the lizard to cut it. You can switch models, including the persistent and growing lizards to watch them fail to heal, reset it, and change the brush size, speed and rotation. It runs in plain JavaScript with no libraries, and `demo/parity_test.mjs` checks that it matches the PyTorch model to within 0.0000005.
+Open `demo/index.html` in a browser (double-clicking it works, no server needed) and drag across the lizard to cut it. You can switch to the butterfly or the mushroom, or to the persistent and growing lizards to watch them fail to heal, reset it, and change the brush size, speed and rotation. It runs in plain JavaScript with no libraries, and `demo/parity_test.mjs` checks that it matches the PyTorch model to within 0.0000005.
 
 ## How to run it
 
