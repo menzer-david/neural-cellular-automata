@@ -10,7 +10,7 @@ I trained three versions of the lizard and tested how well each one heals. The o
 
 ## Why I built it
 
-After my [random forest digit classifier](https://github.com/menzer-david/mnist-random-forest) I started learning how neural networks train by building backprop from scratch with Karpathy's micrograd. I wanted a project where I could actually see a neural network working instead of just getting an accuracy number. When I read about Growing Neural Cellular Automata, a paper where one tiny network copied into every pixel grows a shape and repairs it like cells in a body, I wanted to build it myself.
+I recently started learning how neural networks train by building backprop from scratch with Karpathy's micrograd. I wanted a project where I could actually see a neural network working instead of just getting an accuracy number. When I read about Growing Neural Cellular Automata, a paper where one tiny network copied into every pixel grows a shape and repairs it like cells in a body, I wanted to build it myself.
 
 ## How to run it
 
